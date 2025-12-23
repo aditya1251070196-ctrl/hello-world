@@ -1,13 +1,17 @@
 const CACHE_NAME = "traffic-sign-cache-v1";
 const urlsToCache = [
-  "./index.html",
-  "./style.css",
-  "./script.js",
-  "./manifest.json",
-  "./model/model.json",
-  "./model/labels.json",
-  "./model/traffic_sign_model.weights.bin"
+  "/traffic-sign-recognition-app/index.html",
+  "/traffic-sign-recognition-app/style.css",
+  "/traffic-sign-recognition-app/script.js",
+  "/traffic-sign-recognition-app/manifest.json",
+  "/traffic-sign-recognition-app/icons/icon-192.png",
+  "/traffic-sign-recognition-app/icons/icon-512.png",
+  "/traffic-sign-recognition-app/model/model.json",
+  "/traffic-sign-recognition-app/model/labels.json",
+  "/traffic-sign-recognition-app/model/traffic_sign_model.weights.bin"
 ];
+
+
 
 self.addEventListener("install", event => {
   event.waitUntil(
@@ -23,4 +27,5 @@ self.addEventListener("fetch", event => {
       return response || fetch(event.request);
     })
   );
+
 });
