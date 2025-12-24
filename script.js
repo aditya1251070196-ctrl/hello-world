@@ -1,6 +1,11 @@
 // ----------------------------------------------
 // STOP BROWSER FROM CACHING THE OLD MODEL
 // ----------------------------------------------
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./service-worker.js")
+    .then(() => console.log("Service Worker registered"));
+}
 tf.env().set('WEBGL_DELETE_TEXTURE_THRESHOLD', 0);
 
 let model = null;
@@ -157,7 +162,4 @@ window.predict = predict;
 window.clearInput = clearInput;
 window.stopCamera = stopCamera;
 
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./service-worker.js")
-    .then(() => console.log("Service Worker registered"));
-}
+
