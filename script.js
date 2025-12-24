@@ -153,6 +153,12 @@ function refreshPage() {
     window.location.reload(); // reloads the current page
 }
 
+function clearInput() {
+  document.getElementById("imageInput").value = "";
+  document.getElementById("preview").src = "";
+  document.getElementById("result").innerText = "";
+}
+
 
 
 
