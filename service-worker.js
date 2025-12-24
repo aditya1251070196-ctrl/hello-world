@@ -11,8 +11,6 @@ const urlsToCache = [
   "/traffic-sign-recognition-app/model/traffic_sign_model.weights.bin"
 ];
 
-
-
 self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
@@ -27,5 +25,4 @@ self.addEventListener("fetch", event => {
       return response || fetch(event.request);
     })
   );
-
 });
