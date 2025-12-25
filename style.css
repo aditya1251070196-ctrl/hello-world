@@ -102,3 +102,12 @@ button:hover {
     color: #4da6ff;
     text-shadow: 0px 0px 15px #005fcc;
 }
+
+
+#video {
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+  border: 2px solid #333;
+  border-radius: 8px;
+}
