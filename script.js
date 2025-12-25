@@ -1,255 +1,134 @@
-// ---------------------------------------------
-// STOP BROWSER FROM CACHING THE OLD MODEL
-// ---------------------------------------------
-
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./service-worker.js")
-    .then(() => console.log("Service Worker registered"));
-}
-tf.env().set('WEBGL_DELETE_TEXTURE_THRESHOLD', 0);
-
-let model = null;
-
-// =====================================================
-// LOAD MODEL (always fresh, no browser cache)
-// =====================================================
-async function loadModel() {
-    model = await tf.loadLayersModel("./model/model.json", {
-        requestInit: { cache: "no-store" }
-    });
-    console.log("Model Loaded (no cache)");
-    return model;
+/* ---------- GLOBAL STYLING ---------- */
+body {
+    background: #0d0f17;
+    color: #e6e6e6;
+    font-family: "Segoe UI", Poppins, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0;
+    padding: 40px 20px;
 }
 
-// =====================================================
-// HANDLE IMAGE PREVIEW (FILE UPLOAD)
-// =====================================================
-document.getElementById("imageInput").addEventListener("change", function (e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function (event) {
-        document.getElementById("preview").src = event.target.result;
-    };
-    reader.readAsDataURL(file);
-});
-
-// =====================================================
-// CENTER CROP HELPER (MATCHES TRAINING LOGIC)
-// =====================================================
-function cropCenterToCanvas(source, size) {
-    const canvas = document.createElement("canvas");
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext("2d");
-
-    const sw = source.videoWidth || source.width;
-    const sh = source.videoHeight || source.height;
-
-    const r = Math.min(sw, sh);
-    const sx = (sw - r) / 2;
-    const sy = (sh - r) / 2;
-
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, size, size);
-    ctx.drawImage(source, sx, sy, r, r, 0, 0, size, size);
-
-    return canvas;
+/* Heading */
+h1 {
+    font-size: 42px;
+    margin-bottom: 20px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-align: center;
+    color: #4da6ff;
+    text-shadow: 0px 0px 25px #005fcc;
 }
 
-// =====================================================
-// COMMON PREDICTION FUNCTION (FILE + CAMERA)
-// =====================================================
-async function runPrediction(imgElement) {
-
-    if (!model) await loadModel();
-
-    let tensor = tf.browser.fromPixels(imgElement)
-        .resizeBilinear([64, 64])
-        .toFloat()
-        .div(255)
-        .expandDims(0);
-
-    const output = model.predict(tensor);
-    const data = await output.data();
-
-    const dataArr = Array.from(data);
-    const index = dataArr.indexOf(Math.max(...dataArr));
-
-    const labelsResponse = await fetch("./model/labels.json", { cache: "no-store" });
-    const labels = await labelsResponse.json();
-
-    document.getElementById("result").innerText =
-        `Prediction: ${labels[index]} (score: ${dataArr[index].toFixed(3)})`;
-
-    tensor.dispose();
-    output.dispose();
+/* ---------- CONTAINER CARD ---------- */
+.container {
+    background: #161a24;
+    padding: 30px 40px;
+    border-radius: 16px;
+    width: 450px;
+    box-shadow: 0 0 35px rgba(0, 140, 255, 0.25);
+    border: 1px solid rgba(0, 153, 255, 0.3);
+    text-align: center;
+    transition: 0.3s ease;
 }
 
-// =====================================================
-// FILE UPLOAD PREDICTION
-// =====================================================
-async function predict() {
-    const img = document.getElementById("preview");
-
-    if (!img.src || img.src.length < 10) {
-        alert("Select an image first!");
-        return;
-    }
-
-    runPrediction(img);
+.container:hover {
+    box-shadow: 0 0 50px rgba(0, 140, 255, 0.45);
+    
 }
 
-// =====================================================
-// CAMERA SUPPORT
-// =====================================================
-const video = document.getElementById("video");
-
-// Start camera
-async function startCamera() {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "environment" }
-        });
-        video.srcObject = stream;
-        await video.play();
-    } catch (err) {
-        alert("Camera access failed");
-        console.error(err);
-    }
+/* ---------- FILE INPUT (custom button) ---------- */
+#imageInput {
+    display: none;
 }
 
-// Capture image from camera and predict
-function captureImage() {
-    if (!video.videoWidth) {
-        alert("Camera not ready");
-        return;
-    }
+.upload-label {
+    background: #005fcc;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.2s;
+    display: inline-block;
+    color: white;
+    font-weight: 600;
+    
+}
 
-    const croppedCanvas = cropCenterToCanvas(video, 64);
-
-    const img = new Image();
-    img.src = croppedCanvas.toDataURL("image/png");
-
-    img.onload = () => {
-        runPrediction(img);
-    };
+.upload-label:hover {
+    background: #0078ff;
+    box-shadow: 0 0 15px rgba(0, 140, 255, 0.5);
 }
 
 
 
 
-function stopCamera() {
-    if (video && video.srcObject) {
-        const tracks = video.srcObject.getTracks();
-        tracks.forEach(track => track.stop());
-        video.srcObject = null;
-        console.log("Camera stopped");
-    }
+/* ---------- IMAGE PREVIEW ---------- */
+#preview {
+    width: 270px;
+    height: auto;
+    margin-top: 20px;
+    border-radius: 10px;
+    border: 2px solid rgba(0, 153, 255, 0.4);
+    padding: 5px;
+    background: #0b0d14;
+    box-shadow: 0 0 20px rgba(0, 153, 255, 0.25);
 }
 
-function refreshPage() {
-    window.location.reload(); // reloads the current page
+/* ---------- DETECT BUTTON ---------- */
+button {
+    margin-top: 20px;
+    padding: 12px 32px;
+    font-size: 17px;
+    border-radius: 10px;
+    cursor: pointer;
+    border: none;
+    font-weight: 600;
+    background: linear-gradient(135deg, #007bff, #00c6ff);
+    color: white;
+    transition: 0.25s ease;
 }
 
-function clearInput() {
-  document.getElementById("imageInput").value = "";
-  document.getElementById("preview").src = "";
-  document.getElementById("result").innerText = "";
+button:hover {
+    transform: scale(1.06);
+    box-shadow: 0 0 25px rgba(0, 200, 255, 0.55);
 }
 
-
-self.addEventListener("install", event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      console.log("Caching files...");
-      return cache.addAll(urlsToCache);
-    }).catch(err => console.error("Cache failed:", err))
-  );
-});
-
-self.addEventListener("fetch", event => {
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      // Serve from cache if available, otherwise fetch from network
-      return response || fetch(event.request);
-    })
-  );
-});
-
-
-
-window.startCamera = startCamera;
-window.captureImage = captureImage;
-window.predict = predict;
-window.clearInput = clearInput;
-window.stopCamera = stopCamera;
-
-
-
-
-// Unknown object 
-
-async function runPrediction(imgElement) {
-    if (!model) await loadModel();
-
-    let tensor = tf.browser.fromPixels(imgElement)
-        .resizeBilinear([64, 64])
-        .toFloat()
-        .div(255)
-        .expandDims(0);
-
-    const output = model.predict(tensor);
-    const data = await output.data();
-
-    const dataArr = Array.from(data);
-    const maxScore = Math.max(...dataArr);
-    const index = dataArr.indexOf(maxScore);
-
-    const labelsResponse = await fetch("./model/labels.json", { cache: "no-store" });
-    const labels = await labelsResponse.json();
-
-    // 🔑 Confidence threshold (adjust as needed, e.g. 0.6)
-    const threshold = 0.6;
-
-    let predictionText;
-    if (maxScore < threshold) {
-        predictionText = "Prediction: unknown object";
-    } else {
-        predictionText = `Prediction: ${labels[index]} (score: ${maxScore.toFixed(3)})`;
-    }
-
-    document.getElementById("result").innerText = predictionText;
-
-    tensor.dispose();
-    output.dispose();
+/* ---------- RESULT ---------- */
+#result {
+    margin-top: 25px;
+    font-size: 22px;
+    font-weight: 600;
+    color: #4da6ff;
+    text-shadow: 0px 0px 15px #005fcc;
 }
 
 
-
-
-  // Camera preview
-
-  function captureImage() {
-    if (!video.videoWidth) {
-        alert("Camera not ready");
-        return;
-    }
-
-    const croppedCanvas = cropCenterToCanvas(video, 64);
-
-    // Convert canvas to data URL
-    const dataURL = croppedCanvas.toDataURL("image/png");
-
-    // Show in preview section
-    const preview = document.getElementById("preview");
-    preview.src = dataURL;
-
-    // Run prediction on the preview image
-    preview.onload = () => {
-        runPrediction(preview);
-    };
+/* ---------- VIDEO CONTAINER ---------- */
+.video-container {
+  margin-top: 20px;
+  display: inline-block;
+  background: #005fcc;
+  padding: 12px 20px;
+  border-radius: 6px;
+  text-align: center;
+  box-shadow: 0 0 15px rgba(0, 140, 255, 0.5);
 }
 
+.video-label {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 10px;
+}
 
+#video {
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  background: #0b0d14;
+}
