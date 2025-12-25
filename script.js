@@ -1,6 +1,6 @@
-// ----------------------------------------------
+// ---------------------------------------------
 // STOP BROWSER FROM CACHING THE OLD MODEL
-// ----------------------------------------------
+// ---------------------------------------------
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("./service-worker.js")
