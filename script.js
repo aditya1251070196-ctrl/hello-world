@@ -227,3 +227,29 @@ async function runPrediction(imgElement) {
 }
 
 
+
+
+  // Camera preview
+
+  function captureImage() {
+    if (!video.videoWidth) {
+        alert("Camera not ready");
+        return;
+    }
+
+    const croppedCanvas = cropCenterToCanvas(video, 64);
+
+    // Convert canvas to data URL
+    const dataURL = croppedCanvas.toDataURL("image/png");
+
+    // Show in preview section
+    const preview = document.getElementById("preview");
+    preview.src = dataURL;
+
+    // Run prediction on the preview image
+    preview.onload = () => {
+        runPrediction(preview);
+    };
+}
+
+
