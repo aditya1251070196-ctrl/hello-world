@@ -187,3 +187,43 @@ window.clearInput = clearInput;
 window.stopCamera = stopCamera;
 
 
+
+
+// Unknown object 
+
+async function runPrediction(imgElement) {
+    if (!model) await loadModel();
+
+    let tensor = tf.browser.fromPixels(imgElement)
+        .resizeBilinear([64, 64])
+        .toFloat()
+        .div(255)
+        .expandDims(0);
+
+    const output = model.predict(tensor);
+    const data = await output.data();
+
+    const dataArr = Array.from(data);
+    const maxScore = Math.max(...dataArr);
+    const index = dataArr.indexOf(maxScore);
+
+    const labelsResponse = await fetch("./model/labels.json", { cache: "no-store" });
+    const labels = await labelsResponse.json();
+
+    // 🔑 Confidence threshold (adjust as needed, e.g. 0.6)
+    const threshold = 0.6;
+
+    let predictionText;
+    if (maxScore < threshold) {
+        predictionText = "Prediction: unknown object";
+    } else {
+        predictionText = `Prediction: ${labels[index]} (score: ${maxScore.toFixed(3)})`;
+    }
+
+    document.getElementById("result").innerText = predictionText;
+
+    tensor.dispose();
+    output.dispose();
+}
+
+
